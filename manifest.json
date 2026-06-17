@@ -1,0 +1,20 @@
+{
+    "name": "FairShare - Group Expense Splitter",
+    "short_name": "FairShare",
+    "description": "Split group expenses, switch currency, and calculate who owes whom.",
+    "start_url": "./index.html",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#eef3f8",
+    "theme_color": "#2563eb",
+    "categories": ["finance", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "./fairshare-icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

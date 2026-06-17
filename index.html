@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FairShare">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./fairshare-icon.svg" type="image/svg+xml">
+    <title>FairShare - Group Expense Splitter</title>
+    <style>
+        :root {
+            --bg: #eef3f8;
+            --surface: #ffffff;
+            --surface-soft: #f8fbff;
+            --text: #172033;
+            --muted: #6b7280;
+            --line: #dbe3ef;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --accent: #0f766e;
+            --rose: #e11d48;
+            --amber: #f59e0b;
+            --mint: #14b8a6;
+            --sky: #0ea5e9;
+            --indigo-soft: #dbeafe;
+            --rose-soft: #ffe4e6;
+            --amber-soft: #fef3c7;
+            --mint-soft: #ccfbf1;
+            --danger: #dc2626;
+            --danger-soft: #fee2e2;
+            --success: #15803d;
+            --success-soft: #dcfce7;
+            --shadow: 0 18px 45px rgb(15 23 42 / 0.1);
+            --radius: 8px;
+            --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font);
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgb(20 184 166 / 0.24), transparent 360px),
+                radial-gradient(circle at top right, rgb(225 29 72 / 0.18), transparent 330px),
+                linear-gradient(135deg, #e0f2fe 0, #f8fafc 45%, #fff7ed 100%),
+                var(--bg);
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+        }
+
+        .app {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 40px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 18px 0 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--primary), var(--mint));
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0;
+            box-shadow: 0 16px 34px rgb(37 99 235 / 0.24);
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: clamp(1.65rem, 3vw, 2.35rem);
+            line-height: 1.1;
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 6px;
+            font-size: 0.98rem;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .currency-switch {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgb(255 255 255 / 0.72);
+            border: 1px solid rgb(255 255 255 / 0.82);
+            border-radius: var(--radius);
+            box-shadow: 0 12px 30px rgb(15 23 42 / 0.1);
+            backdrop-filter: blur(12px);
+        }
+
+        .currency-switch button {
+            min-width: 96px;
+            padding: 9px 12px;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.16s ease, color 0.16s ease;
+        }
+
+        .currency-switch button.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.78fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .panel {
+            background: rgb(255 255 255 / 0.82);
+            border: 1px solid rgb(255 255 255 / 0.78);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            backdrop-filter: blur(14px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgb(219 227 239 / 0.84);
+            background: linear-gradient(135deg, #f0f7ff, #fff1f2);
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .step {
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--rose));
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(140px, 0.65fr);
+            gap: 10px;
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #cbd9ea;
+            border-radius: var(--radius);
+            background: #fbfdff;
+            color: var(--text);
+            outline: 0;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgb(37 99 235 / 0.12);
+        }
+
+        .primary-btn,
+        .ghost-btn,
+        .danger-btn {
+            min-height: 44px;
+            border-radius: var(--radius);
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+            white-space: nowrap;
+        }
+
+        .primary-btn {
+            padding: 0 18px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            box-shadow: 0 10px 20px rgb(37 99 235 / 0.18);
+        }
+
+        .primary-btn:hover {
+            background: linear-gradient(135deg, var(--primary-dark), #0f766e);
+        }
+
+        .ghost-btn,
+        .danger-btn {
+            min-height: 34px;
+            padding: 0 10px;
+            background: #eef6ff;
+            color: var(--muted);
+            border: 1px solid var(--line);
+        }
+
+        .danger-btn {
+            color: var(--danger);
+            background: #fff;
+        }
+
+        .danger-btn:hover {
+            background: var(--danger-soft);
+        }
+
+        .disabled {
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            min-height: 58px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, #ffffff, #f0fdfa);
+        }
+
+        .person {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            font-weight: 800;
+        }
+
+        .avatar {
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--mint-soft), var(--indigo-soft));
+            color: #0f5164;
+            font-weight: 900;
+        }
+
+        .item-copy {
+            display: grid;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .item-title,
+        .person-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .item-title {
+            font-weight: 800;
+        }
+
+        .item-meta {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .amount {
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            display: grid;
+            place-items: center;
+            min-height: 90px;
+            padding: 22px;
+            border: 1px dashed #c9d4e4;
+            border-radius: var(--radius);
+            color: var(--muted);
+            background: linear-gradient(135deg, #f0f9ff, #fff7ed);
+            text-align: center;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .summary-tile {
+            padding: 16px;
+            border: 1px solid rgb(37 99 235 / 0.24);
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--indigo-soft), #ecfeff);
+        }
+
+        .summary-tile:nth-child(2) {
+            border-color: rgb(245 158 11 / 0.34);
+            background: linear-gradient(135deg, var(--amber-soft), #fff7ed);
+        }
+
+        .summary-tile span {
+            display: block;
+            margin-bottom: 6px;
+            color: #315f9e;
+            font-size: 0.78rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .summary-tile strong {
+            display: block;
+            color: #12335f;
+            font-size: clamp(1.3rem, 2vw, 1.8rem);
+            line-height: 1.1;
+            word-break: break-word;
+        }
+
+        .settlement-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .settlement-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 14px;
+            border: 1px solid rgb(20 184 166 / 0.24);
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, #f0fdfa, #f8fbff);
+        }
+
+        .settlement-text {
+            min-width: 0;
+            color: var(--muted);
+        }
+
+        .settlement-text strong {
+            color: var(--text);
+        }
+
+        .settlement-amount {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--success-soft), var(--mint-soft));
+            color: #116149;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .balanced-state {
+            border-color: #bbf7d0;
+            background: var(--success-soft);
+            color: var(--success);
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .balances-heading {
+            margin: 22px 0 10px;
+            color: var(--muted);
+            font-size: 0.86rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .balance-status {
+            font-weight: 800;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .owe {
+            color: var(--danger);
+        }
+
+        .gets {
+            color: var(--success);
+        }
+
+        .settled {
+            color: var(--muted);
+        }
+
+        .sticky {
+            position: sticky;
+            top: 18px;
+        }
+
+        @media (max-width: 860px) {
+            .topbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sticky {
+                position: static;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .app {
+                width: min(100% - 20px, 1180px);
+                padding-top: 14px;
+            }
+
+            .brand {
+                align-items: flex-start;
+            }
+
+            .brand-mark {
+                width: 42px;
+                height: 42px;
+            }
+
+            .currency-switch,
+            .currency-switch button {
+                width: 100%;
+            }
+
+            .input-row,
+            .form-grid,
+            .summary-grid,
+            .settlement-item {
+                grid-template-columns: 1fr;
+            }
+
+            .primary-btn {
+                width: 100%;
+            }
+
+            .list-item {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .balance-status {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="app">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">FS</div>
+                <div>
+                    <h1>FairShare</h1>
+                    <p class="subtitle">Split group expenses and settle up clearly.</p>
+                </div>
+            </div>
+
+            <div class="toolbar" aria-label="Currency selector">
+                <div class="currency-switch">
+                    <button type="button" id="usdButton" class="active" onclick="setCurrency('USD')">Dollars</button>
+                    <button type="button" id="inrButton" onclick="setCurrency('INR')">Rupees</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="layout">
+            <section class="stack" aria-label="Expense entry">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><span class="step">1</span>Add Friends</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="input-row">
+                            <input type="text" id="friendNameInput" placeholder="Friend name">
+                            <button class="primary-btn" onclick="addFriend()">Add</button>
+                        </div>
+                        <ul id="friendsList" class="list" style="margin-top: 14px;"></ul>
+                    </div>
+                </div>
+
+                <div class="panel disabled" id="expenseCard">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><span class="step">2</span>Add Expense</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="payerSelect">Paid By</label>
+                                <select id="payerSelect">
+                                    <option value="" disabled selected>Choose person</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="amountInput">Amount</label>
+                                <input type="number" id="amountInput" placeholder="$0.00" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="input-row" style="margin-top: 12px;">
+                            <input type="text" id="descriptionInput" placeholder="Expense name">
+                            <button class="primary-btn" onclick="addExpense()">Add Bill</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title"><span class="step">3</span>Expense History</h2>
+                    </div>
+                    <div class="panel-body">
+                        <ul id="expensesList" class="list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="panel sticky" aria-label="Settlement plan">
+                <div class="panel-header">
+                    <h2 class="panel-title">Settlement Plan</h2>
+                </div>
+                <div class="panel-body">
+                    <div id="summaryContainer" style="display: none;">
+                        <div class="summary-grid">
+                            <div class="summary-tile">
+                                <span>Total Spent</span>
+                                <strong id="totalSpentDisplay">$0.00</strong>
+                            </div>
+                            <div class="summary-tile">
+                                <span>Per Person</span>
+                                <strong id="perPersonDisplay">$0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settlementsContainer" class="settlement-list"></div>
+
+                    <h3 id="balancesTitle" class="balances-heading" style="display: none;">Individual Balances</h3>
+                    <ul id="balancesList" class="list"></ul>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        let friends = [];
+        let expenses = [];
+        let expenseIdCounter = 0;
+        let selectedCurrency = 'USD';
+
+        const currencies = {
+            USD: {
+                label: 'Dollars',
+                symbol: '$',
+                code: 'USD',
+                locale: 'en-US'
+            },
+            INR: {
+                label: 'Rupees',
+                symbol: '₹',
+                code: 'INR',
+                locale: 'en-IN'
+            }
+        };
+
+        const friendNameInput = document.getElementById('friendNameInput');
+        const friendsList = document.getElementById('friendsList');
+        const expenseCard = document.getElementById('expenseCard');
+        const payerSelect = document.getElementById('payerSelect');
+        const amountInput = document.getElementById('amountInput');
+        const descriptionInput = document.getElementById('descriptionInput');
+        const expensesList = document.getElementById('expensesList');
+        const usdButton = document.getElementById('usdButton');
+        const inrButton = document.getElementById('inrButton');
+
+        const summaryContainer = document.getElementById('summaryContainer');
+        const totalSpentDisplay = document.getElementById('totalSpentDisplay');
+        const perPersonDisplay = document.getElementById('perPersonDisplay');
+        const settlementsContainer = document.getElementById('settlementsContainer');
+        const balancesTitle = document.getElementById('balancesTitle');
+        const balancesList = document.getElementById('balancesList');
+
+        friendNameInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') addFriend();
+        });
+
+        descriptionInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') addExpense();
+        });
+
+        amountInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') addExpense();
+        });
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function escapeAttribute(value) {
+            return escapeHtml(value).replace(/`/g, '&#096;');
+        }
+
+        function getInitials(name) {
+            return name
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map(part => part[0])
+                .join('')
+                .toUpperCase();
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat(currencies[selectedCurrency].locale, {
+                style: 'currency',
+                currency: currencies[selectedCurrency].code,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function setCurrency(currency) {
+            selectedCurrency = currency;
+            updateUI();
+        }
+
+        function addFriend() {
+            const name = friendNameInput.value.trim();
+            if (!name) {
+                alert('Please enter a name.');
+                return;
+            }
+
+            const nameExists = friends.some(friend => friend.toLowerCase() === name.toLowerCase());
+            if (nameExists) {
+                alert('This friend is already in the list.');
+                return;
+            }
+
+            friends.push(name);
+            friendNameInput.value = '';
+            updateUI();
+        }
+
+        function removeFriend(index) {
+            const name = friends[index];
+            if (!name) return;
+
+            friends = friends.filter(friend => friend !== name);
+            expenses = expenses.filter(expense => expense.payer !== name);
+            updateUI();
+        }
+
+        function addExpense() {
+            const payer = payerSelect.value;
+            const amount = parseFloat(amountInput.value);
+            const description = descriptionInput.value.trim() || 'Untitled Bill';
+
+            if (!payer) {
+                alert('Please select who paid.');
+                return;
+            }
+
+            if (Number.isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid amount.');
+                return;
+            }
+
+            expenses.push({
+                id: expenseIdCounter++,
+                payer,
+                amount,
+                description
+            });
+
+            amountInput.value = '';
+            descriptionInput.value = '';
+            updateUI();
+        }
+
+        function removeExpense(id) {
+            expenses = expenses.filter(expense => expense.id !== id);
+            updateUI();
+        }
+
+        function calculateSettlements() {
+            if (friends.length === 0) {
+                return { settlements: [], balances: {}, totalSpent: 0 };
+            }
+
+            const balances = {};
+            let totalSpent = 0;
+
+            friends.forEach(friend => {
+                balances[friend] = 0;
+            });
+
+            expenses.forEach(expense => {
+                totalSpent += expense.amount;
+                const splitAmount = expense.amount / friends.length;
+
+                friends.forEach(friend => {
+                    if (friend === expense.payer) {
+                        balances[friend] += expense.amount - splitAmount;
+                    } else {
+                        balances[friend] -= splitAmount;
+                    }
+                });
+            });
+
+            const debtors = [];
+            const creditors = [];
+
+            Object.entries(balances).forEach(([person, amount]) => {
+                if (amount < -0.01) debtors.push({ person, amount: Math.abs(amount) });
+                if (amount > 0.01) creditors.push({ person, amount });
+            });
+
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+
+            const settlements = [];
+            let debtorIndex = 0;
+            let creditorIndex = 0;
+
+            while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+                const debtor = debtors[debtorIndex];
+                const creditor = creditors[creditorIndex];
+                const amount = Math.min(debtor.amount, creditor.amount);
+
+                settlements.push({
+                    from: debtor.person,
+                    to: creditor.person,
+                    amount
+                });
+
+                debtor.amount -= amount;
+                creditor.amount -= amount;
+
+                if (debtor.amount < 0.01) debtorIndex++;
+                if (creditor.amount < 0.01) creditorIndex++;
+            }
+
+            return { settlements, balances, totalSpent };
+        }
+
+        function updateUI() {
+            renderCurrency();
+            renderFriends();
+            renderExpenseForm();
+            renderExpensesList();
+            renderResults();
+        }
+
+        function renderCurrency() {
+            usdButton.classList.toggle('active', selectedCurrency === 'USD');
+            inrButton.classList.toggle('active', selectedCurrency === 'INR');
+            amountInput.placeholder = `${currencies[selectedCurrency].symbol}0.00`;
+        }
+
+        function renderFriends() {
+            if (friends.length === 0) {
+                friendsList.innerHTML = '<div class="empty-state">No friends added yet.</div>';
+                return;
+            }
+
+            friendsList.innerHTML = friends.map((friend, index) => {
+                const safeName = escapeHtml(friend);
+
+                return `
+                    <li class="list-item">
+                        <div class="person">
+                            <span class="avatar">${escapeHtml(getInitials(friend))}</span>
+                            <span class="person-name">${safeName}</span>
+                        </div>
+                        <button class="danger-btn" onclick="removeFriend(${index})">Remove</button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function renderExpenseForm() {
+            expenseCard.classList.toggle('disabled', friends.length === 0);
+
+            const currentSelection = payerSelect.value;
+            payerSelect.innerHTML = '<option value="" disabled selected>Choose person</option>' +
+                friends.map(friend => `<option value="${escapeAttribute(friend)}">${escapeHtml(friend)}</option>`).join('');
+
+            if (friends.includes(currentSelection)) {
+                payerSelect.value = currentSelection;
+            }
+        }
+
+        function renderExpensesList() {
+            if (expenses.length === 0) {
+                expensesList.innerHTML = '<div class="empty-state">No bills added yet.</div>';
+                return;
+            }
+
+            expensesList.innerHTML = expenses.map(expense => `
+                <li class="list-item">
+                    <div class="item-copy">
+                        <span class="item-title">${escapeHtml(expense.description)}</span>
+                        <span class="item-meta">Paid by <strong>${escapeHtml(expense.payer)}</strong></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="amount">${formatMoney(expense.amount)}</span>
+                        <button class="danger-btn" onclick="removeExpense(${expense.id})">Delete</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function renderResults() {
+            const { settlements, balances, totalSpent } = calculateSettlements();
+
+            if (friends.length === 0 || expenses.length === 0) {
+                summaryContainer.style.display = 'none';
+                balancesTitle.style.display = 'none';
+                balancesList.innerHTML = '';
+                settlementsContainer.innerHTML = '<div class="empty-state">Add friends and expenses to generate a settlement plan.</div>';
+                return;
+            }
+
+            summaryContainer.style.display = 'block';
+            totalSpentDisplay.innerText = formatMoney(totalSpent);
+            perPersonDisplay.innerText = formatMoney(totalSpent / friends.length);
+
+            if (settlements.length === 0) {
+                settlementsContainer.innerHTML = '<div class="settlement-item balanced-state">All balances are settled.</div>';
+            } else {
+                settlementsContainer.innerHTML = settlements.map(settlement => `
+                    <div class="settlement-item">
+                        <div class="settlement-text">
+                            <strong>${escapeHtml(settlement.from)}</strong> owes <strong>${escapeHtml(settlement.to)}</strong>
+                        </div>
+                        <div class="settlement-amount">${formatMoney(settlement.amount)}</div>
+                    </div>
+                `).join('');
+            }
+
+            balancesTitle.style.display = 'block';
+            balancesList.innerHTML = Object.entries(balances).map(([person, amount]) => {
+                let statusText = 'Settled';
+                let statusClass = 'settled';
+                let formattedAmount = '';
+
+                if (amount < -0.01) {
+                    statusText = 'Owes';
+                    statusClass = 'owe';
+                    formattedAmount = formatMoney(Math.abs(amount));
+                } else if (amount > 0.01) {
+                    statusText = 'Gets back';
+                    statusClass = 'gets';
+                    formattedAmount = formatMoney(amount);
+                }
+
+                return `
+                    <li class="list-item">
+                        <div class="person">
+                            <span class="avatar">${escapeHtml(getInitials(person))}</span>
+                            <span class="person-name">${escapeHtml(person)}</span>
+                        </div>
+                        <span class="balance-status ${statusClass}">${statusText}${formattedAmount ? ` ${formattedAmount}` : ''}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        updateUI();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js').catch(function (error) {
+                    console.warn('Service worker registration failed:', error);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
